@@ -197,9 +197,6 @@ class CarInterface(CarInterfaceBase):
     if top_params & structs.TopFlags.ToyotaReverseAccChange:
       ret.flags |= ToyotaFlags.REVERSE_ACC_CHANGE.value
 
-    if top_params & structs.TopFlags.ToyotaBSM:
-      ret.flags |= ToyotaFlags.BSM.value
-
     if top_params & structs.TopFlags.ToyotaAutoBrakeHold:
       ret.flags |= ToyotaFlags.AUTO_BRAKE_HOLD.value
 

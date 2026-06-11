@@ -38,24 +38,6 @@ MAX_USER_TORQUE = 500
 # resume, lead, and lane lines hysteresis
 UI_HYSTERESIS_TIME = 1.  # seconds
 
-# Blindspot codes
-LEFT_BLINDSPOT = b'\x41'
-RIGHT_BLINDSPOT = b'\x42'
-
-
-def set_blindspot_debug_mode(lr,enable):
-  if enable:
-    m = lr + b'\x02\x10\x60\x00\x00\x00\x00'
-  else:
-    m = lr + b'\x02\x10\x01\x00\x00\x00\x00'
-  return CanData(0x750, m, 0)
-
-
-def poll_blindspot_status(lr):
-  m = lr + b'\x02\x21\x69\x00\x00\x00\x00'
-  return CanData(0x750, m, 0)
-
-
 def get_long_tune(CP, params):
   _ = CP
   kiBP = [0.,  2.,  5.,  15.]
@@ -101,12 +83,6 @@ class CarController(CarControllerBase):
     self.secoc_prev_reset_counter = 0
 
     self._reverse_acc_change = self.CP.flags & ToyotaFlags.REVERSE_ACC_CHANGE.value
-    self.toyota_bsm = self.CP.flags & ToyotaFlags.BSM.value
-    self.blindspot_debug_enabled_left = False
-    self.blindspot_debug_enabled_right = False
-    self.blindspot_frame = 0
-    self.blindspot_rate = 20
-    self.blindspot_always_on = True
 
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
@@ -121,45 +97,6 @@ class CarController(CarControllerBase):
 
     # *** control msgs ***
     can_sends = []
-
-    # Enable blindspot debug mode once (@arne182)
-    # let's keep all the commented out code for easy debug purpose for future.
-    if self.toyota_bsm:
-      if self.frame > 200:
-        # left bsm
-        if not self.blindspot_debug_enabled_left:
-          if (self.blindspot_always_on or CS.out.vEgo > 6): # eagle eye camera will stop working if right bsm is switched on under 6m/s
-            can_sends.append(set_blindspot_debug_mode(LEFT_BLINDSPOT, True))
-            self.blindspot_debug_enabled_left = True
-            # print("bsm debug left, on")
-        else:
-          if not self.blindspot_always_on and self.frame - self.blindspot_frame > 50:
-            can_sends.append(set_blindspot_debug_mode(LEFT_BLINDSPOT, False))
-            self.blindspot_debug_enabled_left = False
-            # print("bsm debug left, off")
-          if self.frame % self.blindspot_rate == 0:
-            can_sends.append(poll_blindspot_status(LEFT_BLINDSPOT))
-            # if CS.out.leftBlinker:
-            self.blindspot_frame = self.frame
-            # print(self.blindspot_frame)
-            # print("bsm poll left")
-        # right bsm
-        if not self.blindspot_debug_enabled_right:
-          if (self.blindspot_always_on or CS.out.vEgo > 6): # eagle eye camera will stop working if right bsm is switched on under 6m/s
-            can_sends.append(set_blindspot_debug_mode(RIGHT_BLINDSPOT, True))
-            self.blindspot_debug_enabled_right = True
-            # print("bsm debug right, on")
-        else:
-          if not self.blindspot_always_on and self.frame - self.blindspot_frame > 50:
-            can_sends.append(set_blindspot_debug_mode(RIGHT_BLINDSPOT, False))
-            self.blindspot_debug_enabled_right = False
-            # print("bsm debug right, off")
-          if self.frame % self.blindspot_rate == self.blindspot_rate/2:
-            can_sends.append(poll_blindspot_status(RIGHT_BLINDSPOT))
-            # if CS.out.rightBlinker:
-            self.blindspot_frame = self.frame
-            # print(self.blindspot_frame)
-            # print("bsm poll right")
 
     # *** handle secoc reset counter increase ***
     if self.CP.flags & ToyotaFlags.SECOC.value:

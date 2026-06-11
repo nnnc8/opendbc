@@ -25,7 +25,6 @@ class TopFlags:
   NNFF = 2
   ToyotaStockLong = 2 ** 2
   ToyotaReverseAccChange = 2 ** 6
-  ToyotaBSM = 2 ** 8
   ToyotaAutoBrakeHold = 2 ** 9
   ToyotaExperimentalMode = 2 ** 10
   ToyotaDriveMode = 2 ** 11

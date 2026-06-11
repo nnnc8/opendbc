@@ -83,7 +83,6 @@ class ToyotaFlags(IntFlag):
   ALKA = 2 ** 13
   ZSS = 2 ** 14
   REVERSE_ACC_CHANGE = 2 ** 18
-  BSM = 2 ** 20
   AUTO_BRAKE_HOLD = 2 ** 21
   EXPERIMENTAL_MODE = 2 ** 22
   DRIVE_MODE = 2 ** 23
