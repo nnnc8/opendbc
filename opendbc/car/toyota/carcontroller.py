@@ -12,7 +12,6 @@ from opendbc.car.toyota import toyotacan
 from opendbc.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, TSS2_CAR, \
                                         CarControllerParams, ToyotaFlags, \
                                         UNSUPPORTED_DSU_CAR, RADAR_ACC_CAR
-from opendbc.car.common.conversions import Conversions as CV
 from opendbc.can import CANPacker
 
 Ecu = structs.CarParams.Ecu
@@ -43,11 +42,6 @@ COMPENSATORY_CALCULATION_THRESHOLD_BP = [0., 20., 32.]  # m/s
 
 # resume, lead, and lane lines hysteresis
 UI_HYSTERESIS_TIME = 1.  # seconds
-
-GearShifter = structs.CarState.GearShifter
-UNLOCK_CMD = b'\x40\x05\x30\x11\x00\x40\x00\x00'
-LOCK_CMD = b'\x40\x05\x30\x11\x00\x80\x00\x00'
-LOCK_AT_SPEED = 10 * CV.KPH_TO_MS
 
 # Blindspot codes
 LEFT_BLINDSPOT = b'\x41'
@@ -118,10 +112,6 @@ class CarController(CarControllerBase):
     self.secoc_acc_message_counter = 0
     self.secoc_prev_reset_counter = 0
 
-    self.toyotaautolock = self.CP.flags & ToyotaFlags.AUTO_LOCK.value
-    self.toyotaautounlock = self.CP.flags & ToyotaFlags.AUTO_UNLOCK.value
-    self.last_gear = GearShifter.park
-    self.lock_once = False
     self.ToyotaTune = self.CP.flags & ToyotaFlags.TSSP_TUNE.value
     self._reverse_acc_change = self.CP.flags & ToyotaFlags.REVERSE_ACC_CHANGE.value
     self.topsng = self.CP.flags & ToyotaFlags.TSSP_SNG.value
@@ -145,21 +135,6 @@ class CarController(CarControllerBase):
 
     # *** control msgs ***
     can_sends = []
-
-    # dp - door auto lock / unlock logic
-    # thanks to AlexandreSato & cydia2020
-    # https://github.com/AlexandreSato/openpilot/blob/personal/doors.py
-    if self.toyotaautolock or self.toyotaautounlock:
-      gear = CS.out.gearShifter
-      if self.last_gear != gear and gear == GearShifter.park:
-        if self.toyotaautounlock:
-          can_sends.append(CanData(0x750, UNLOCK_CMD, 0))
-        if self.toyotaautolock:
-          self.lock_once = False
-      elif self.toyotaautolock and not CS.out.doorOpen and gear == GearShifter.drive and not self.lock_once and CS.out.vEgo >= LOCK_AT_SPEED:
-        can_sends.append(CanData(0x750, LOCK_CMD, 0))
-        self.lock_once = True
-      self.last_gear = gear
 
     # Enable blindspot debug mode once (@arne182)
     # let's keep all the commented out code for easy debug purpose for future.

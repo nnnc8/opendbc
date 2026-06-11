@@ -209,12 +209,6 @@ class CarInterface(CarInterfaceBase):
     if top_params & structs.TopFlags.ToyotaTSSPTune:
       ret.flags |= ToyotaFlags.TSSP_TUNE.value
 
-    if top_params & structs.TopFlags.ToyotaAutoLock:
-      ret.flags |= ToyotaFlags.AUTO_LOCK.value
-
-    if top_params & structs.TopFlags.ToyotaAutoUnlock:
-      ret.flags |= ToyotaFlags.AUTO_UNLOCK.value
-
     if top_params & structs.TopFlags.ToyotaReverseAccChange:
       ret.flags |= ToyotaFlags.REVERSE_ACC_CHANGE.value
 

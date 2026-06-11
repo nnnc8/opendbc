@@ -83,8 +83,6 @@ class ToyotaFlags(IntFlag):
   ALKA = 2 ** 13
   ZSS = 2 ** 14
   TSSP_TUNE = 2 ** 15
-  AUTO_LOCK = 2 ** 16
-  AUTO_UNLOCK = 2 ** 17
   REVERSE_ACC_CHANGE = 2 ** 18
   TSSP_SNG = 2 ** 19
   BSM = 2 ** 20
