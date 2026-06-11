@@ -180,34 +180,19 @@ class CarInterface(CarInterfaceBase):
     # to a negative value, so it won't matter.
     ret.minEnableSpeed = -1. if stop_and_go else MIN_ACC_SPEED
 
-    if top_params & structs.TopFlags.ToyotaTSSPTune & (ret.flags & ToyotaFlags.SMART_DSU):
-      ret.stoppingDecelRate = 0.25  # reach stopping target smoothly
-      ret.longitudinalTuning.kiBP = [0., 15.]
-      ret.longitudinalTuning.kiV = [1.6, 1.2]
-
     if candidate in TSS2_CAR:
       ret.flags |= ToyotaFlags.RAISED_ACCEL_LIMIT.value
 
       ret.vEgoStopping = 0.25
       ret.vEgoStarting = 0.01
 
-      if top_params & structs.TopFlags.ToyotaTSSPTune:
-        ret.longitudinalTuning.kiBP = [0., 10.]
-        ret.longitudinalTuning.kiV = [1.4, 1.2]
-        ret.stoppingDecelRate = 0.15   # reach stopping target smoothly
-        if candidate == CAR.TOYOTA_RAV4_TSS2:
-          ret.stoppingDecelRate = 0.3  # optimal on rav4
-      else:
-        ret.stoppingDecelRate = 0.03  # reach stopping target smoothly
-        if candidate == CAR.TOYOTA_RAV4_TSS2:
-          ret.stoppingDecelRate = 0.3  # optimal on rav4
+      ret.stoppingDecelRate = 0.03  # reach stopping target smoothly
+      if candidate == CAR.TOYOTA_RAV4_TSS2:
+        ret.stoppingDecelRate = 0.3  # optimal on rav4
 
     # Hybrids have much quicker longitudinal actuator response
     if ret.flags & ToyotaFlags.HYBRID.value:
       ret.longitudinalActuatorDelay = 0.05
-
-    if top_params & structs.TopFlags.ToyotaTSSPTune:
-      ret.flags |= ToyotaFlags.TSSP_TUNE.value
 
     if top_params & structs.TopFlags.ToyotaReverseAccChange:
       ret.flags |= ToyotaFlags.REVERSE_ACC_CHANGE.value

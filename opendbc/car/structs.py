@@ -24,7 +24,6 @@ class TopFlags:
   LateralALKA = 1
   NNFF = 2
   ToyotaStockLong = 2 ** 2
-  ToyotaTSSPTune = 2 ** 3
   ToyotaReverseAccChange = 2 ** 6
   ToyotaBSM = 2 ** 8
   ToyotaAutoBrakeHold = 2 ** 9
