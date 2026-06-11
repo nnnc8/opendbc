@@ -114,7 +114,6 @@ class CarController(CarControllerBase):
 
     self.ToyotaTune = self.CP.flags & ToyotaFlags.TSSP_TUNE.value
     self._reverse_acc_change = self.CP.flags & ToyotaFlags.REVERSE_ACC_CHANGE.value
-    self.topsng = self.CP.flags & ToyotaFlags.TSSP_SNG.value
     self.toyota_bsm = self.CP.flags & ToyotaFlags.BSM.value
     self.blindspot_debug_enabled_left = False
     self.blindspot_debug_enabled_right = False
@@ -269,7 +268,7 @@ class CarController(CarControllerBase):
         else:
           self._standstill_req = False
 
-    self.standstill_req = self._standstill_req and self.CP.carFingerprint not in NO_STOP_TIMER_CAR and not self.topsng
+    self.standstill_req = self._standstill_req and self.CP.carFingerprint not in NO_STOP_TIMER_CAR
 
     # AleSato's Automatic Brake Hold
     if self.CP.flags & ToyotaFlags.AUTO_BRAKE_HOLD.value and self.CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR) \

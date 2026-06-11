@@ -84,7 +84,6 @@ class ToyotaFlags(IntFlag):
   ZSS = 2 ** 14
   TSSP_TUNE = 2 ** 15
   REVERSE_ACC_CHANGE = 2 ** 18
-  TSSP_SNG = 2 ** 19
   BSM = 2 ** 20
   AUTO_BRAKE_HOLD = 2 ** 21
   EXPERIMENTAL_MODE = 2 ** 22

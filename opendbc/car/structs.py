@@ -26,7 +26,6 @@ class TopFlags:
   ToyotaStockLong = 2 ** 2
   ToyotaTSSPTune = 2 ** 3
   ToyotaReverseAccChange = 2 ** 6
-  ToyotaTSSPSNG = 2 ** 7
   ToyotaBSM = 2 ** 8
   ToyotaAutoBrakeHold = 2 ** 9
   ToyotaExperimentalMode = 2 ** 10
