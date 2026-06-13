@@ -299,7 +299,7 @@ class CarController(CarControllerBase):
         pcm_accel_cmd = float(np.clip(pcm_accel_cmd, self.params.ACCEL_MIN, self.params.ACCEL_MAX))
 
         if self.CP.flags & ToyotaFlags.AUTO_BRAKE_HOLD.value and self.CP.flags & ToyotaFlags.HYBRID.value:
-          if CS.out.brakeholdGovernor and CS.out.standstill and stopping:
+          if CS.out.brakeholdGovernor:
             pcm_accel_cmd = 0.0
             self.standstill_req = False
 

@@ -89,6 +89,9 @@ class CarState(CarStateBase):
     self.reset_brakehold = False
     self.prev_brakePressed = True
     self.slope_angle = 0.0
+    self.brakehold_state = "idle"
+    self.brakehold_timer = 0
+    self.non_standstill_timer = 0
 
   def update(self, can_parsers) -> structs.CarState:
     cp = can_parsers[Bus.pt]
@@ -303,21 +306,49 @@ class CarState(CarStateBase):
     if self.AutomaticBrakeHold and self.CP.carFingerprint in (TSS2_CAR - RADAR_ACC_CAR) \
        and (self.CP.flags & ToyotaFlags.HYBRID.value) and not (self.CP.flags & ToyotaFlags.SECOC.value):
       self.stock_aeb = copy.copy(cp_cam.vl["PRE_COLLISION_2"])
-      self.brakehold_condition_satisfied = ret.standstill and ret.cruiseState.available and not ret.gasPressed and not \
-                                           ret.cruiseState.enabled and (ret.gearShifter not in (self.GearShifter.reverse,
-                                           self.GearShifter.park))
       self.slope_angle = cp.vl["VSC1S07"]["ASLP"] # filtered pitch estimate from the car, negative is a downward slope
-      if self.brakehold_condition_satisfied and self.slope_angle > -3:
-        if self.brakehold_condition_counter > self.time_to_brakehold and not self.reset_brakehold:
-          ret.brakeholdGovernor = True
-        else:
-          ret.brakeholdGovernor = False
 
-        self.brakehold_condition_counter += 1
-      else:
-        ret.brakeholdGovernor = False
-        self.reset_brakehold = False
-        self.brakehold_condition_counter = 0
+      satisfied = (ret.standstill and
+                   ret.brakePressed and
+                   not ret.gasPressed and
+                   ret.cruiseState.available and
+                   not ret.cruiseState.enabled and
+                   (ret.gearShifter not in (self.GearShifter.reverse, self.GearShifter.park)))
+
+      if self.brakehold_state == "idle":
+        if satisfied:
+          self.brakehold_state = "arming"
+          self.brakehold_timer = 0
+      elif self.brakehold_state == "arming":
+        if not satisfied:
+          self.brakehold_state = "idle"
+          self.brakehold_timer = 0
+        else:
+          self.brakehold_timer += 1
+          if self.brakehold_timer >= 100: # 1.0 second at 100Hz
+            self.brakehold_state = "latched"
+            self.brakehold_timer = 0
+            self.non_standstill_timer = 0
+      elif self.brakehold_state == "latched":
+        # Check explicit release conditions
+        release = (ret.gasPressed or
+                   ret.cruiseState.enabled or
+                   (ret.gearShifter in (self.GearShifter.reverse, self.GearShifter.park)))
+        
+        # Safe release: if vehicle clearly leaves standstill for > 0.3s
+        if not ret.standstill:
+          self.non_standstill_timer += 1
+          if self.non_standstill_timer >= 30: # 0.3 seconds at 100Hz
+            release = True
+        else:
+          self.non_standstill_timer = 0
+
+        if release:
+          self.brakehold_state = "idle"
+          self.brakehold_timer = 0
+          self.non_standstill_timer = 0
+
+      ret.brakeholdGovernor = (self.brakehold_state == "latched")
       self.prev_brakePressed = ret.brakePressed
 
     self.frame += 1
