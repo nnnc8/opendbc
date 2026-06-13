@@ -14,6 +14,11 @@ from opendbc.car.toyota.values import CAR, STATIC_DSU_MSGS, NO_STOP_TIMER_CAR, T
                                         UNSUPPORTED_DSU_CAR, RADAR_ACC_CAR
 from opendbc.can import CANPacker
 
+try:
+  from openpilot.common.params import Params
+except ImportError:
+  Params = None
+
 Ecu = structs.CarParams.Ecu
 LongCtrlState = structs.CarControl.Actuators.LongControlState
 SteerControlType = structs.CarParams.SteerControlType
@@ -84,12 +89,26 @@ class CarController(CarControllerBase):
 
     self._reverse_acc_change = self.CP.flags & ToyotaFlags.REVERSE_ACC_CHANGE.value
 
+    self.params_reader = Params() if Params is not None else None
+    self.aegis_quiet_cabin = False
+    if self.params_reader is not None:
+      try:
+        self.aegis_quiet_cabin = self.params_reader.get_bool("AegisQuietCabin")
+      except Exception:
+        pass
+
   def update(self, CC, CS, now_nanos):
     actuators = CC.actuators
     stopping = actuators.longControlState == LongCtrlState.stopping
     hud_control = CC.hudControl
     pcm_cancel_cmd = CC.cruiseControl.cancel
     lat_active = CC.latActive and abs(CS.out.steeringTorque) < MAX_USER_TORQUE
+
+    if self.frame % 100 == 0 and self.params_reader is not None:
+      try:
+        self.aegis_quiet_cabin = self.params_reader.get_bool("AegisQuietCabin")
+      except Exception:
+        pass
 
     if len(CC.orientationNED) == 3:
       self.pitch.update(CC.orientationNED[1])
@@ -323,7 +342,10 @@ class CarController(CarControllerBase):
         send_ui = True
 
       if self.frame % 20 == 0 or send_ui:
-        can_sends.append(toyotacan.create_ui_command(self.packer, steer_alert, pcm_cancel_cmd, hud_control.leftLaneVisible,
+        chime_cmd = pcm_cancel_cmd
+        if self.aegis_quiet_cabin:
+          chime_cmd = 0
+        can_sends.append(toyotacan.create_ui_command(self.packer, steer_alert, chime_cmd, hud_control.leftLaneVisible,
                                                      hud_control.rightLaneVisible, hud_control.leftLaneDepart,
                                                      hud_control.rightLaneDepart, lat_active, CS.lkas_hud))
 
